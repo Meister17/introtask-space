@@ -10,6 +10,7 @@ function Vessel(name, position, capacity) {
   this.position = position;
   this.capacity = capacity;
   this.cargo = 0;
+  this.onplanet = null;
 }
 
 /**
@@ -21,18 +22,19 @@ function Vessel(name, position, capacity) {
  * @name Vessel.report
  */
 Vessel.prototype.report = function () {
-  var message = 'Корабль: "' + this.name + '". Местоположение: ';
-  if (typeof(this.position) == 'string') {
-    message += 'планета ' + this.position;
+  var message = [];
+  message.push('Корабль: "' + this.name + '"');
+  if (this.onplanet != null) {
+    message.push('Местоположение: ' + this.onplanet);
   } else {
-    message += this.position[0];
-    for (var index = 1; index < this.position.length; ++index) {
-      message += ',' + this.position[index];
-    }
+    message.push('Местоположение: ' + this.position);
   }
-  message += '. Занято: ' + this.getOccupiedSpace() + ' из ' + this.capacity +
-      'т';
-  document.write(message + '.<br>');
+  if (this.getOccupiedSpace() > 0) {
+    message.push('Занято: ' + this.getOccupiedSpace() + ' из ' + this.capacity + 'т');
+  } else {
+    message.push('Товаров нет');
+  }
+  document.write(message.join('. ') + '<br>');
 }
 
 /**
@@ -63,9 +65,11 @@ Vessel.prototype.getOccupiedSpace = function () {
  */
 Vessel.prototype.flyTo = function (newPosition) {
   if (newPosition instanceof Planet) {
-    this.position = newPosition.name;
+    this.position = newPosition.position;
+    this.onplanet = newPosition.name;
   } else {
     this.position = newPosition;
+    this.onplanet = null;
   }
 }
 
@@ -87,17 +91,15 @@ function Planet(name, position, availableAmountOfCargo) {
  * @name Planet.report
  */
 Planet.prototype.report = function () {
-  var message = 'Планета: ' + this.name + '. Местоположение: ' +
-      this.position[0];
-  for (var index = 1; index < this.position.length; ++index) {
-    message += ',' + this.position[index];
-  }
+  var message = [];
+  message.push('Планета: ' + this.name);
+  message.push('Местоположение: ' + this.position);
   if (this.getAvailableAmountOfCargo() > 0) {
-    message += '. Доступно груза: ' + this.getAvailableAmountOfCargo() + 'т';
+    message.push('Доступно груза: ' + this.getAvailableAmountOfCargo() + 'т');
   } else {
-    message += '. Грузов нет';
+    message.push('Грузов нет');
   }
-  document.write(message + '.<br>');
+  document.write(message.join('. ') + '<br>');
 }
 
 /**
@@ -117,7 +119,8 @@ Planet.prototype.getAvailableAmountOfCargo = function () {
  * @name Vessel.loadCargoTo
  */
 Planet.prototype.loadCargoTo = function (vessel, cargoWeight) {
-  if (vessel.position == this.name) {
+  if (vessel.position[0] == this.position[0] &&
+      vessel.position[1] == this.position[1]) {
     if (cargoWeight <= 0) {
       document.write('Вес загружаемого груза должен быть положительным.<br>');
     } else if (cargoWeight > this.getAvailableAmountOfCargo()) {
@@ -144,9 +147,10 @@ Planet.prototype.loadCargoTo = function (vessel, cargoWeight) {
  * @name Vessel.unloadCargoFrom
  */
 Planet.prototype.unloadCargoFrom = function (vessel, cargoWeight) {
-  if (vessel.position == this.name) {
+  if (vessel.position[0] == this.position[0] &&
+      vessel.position[1] == this.position[1]) {
     if (cargoWeight <= 0) {
-      document.write('Вес выгружаемого груза не может быть отрицателен.<br>');
+      document.write('Вес выгружаемого груза должен быть положительным.<br>');
     } else if (cargoWeight > vessel.getOccupiedSpace()) {
       document.write('Вес выгружаемого груза не может превышать вес груза на ' +
                      'борту корабля.<br>');
